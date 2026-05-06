@@ -30,13 +30,37 @@ namespace StarterCode_WayPoints
                 {
                     string[] feat = line.Split(',');
                     if (feat.Length < 11) continue;
+                    
+                    int elev = ConvertElevation(feat[5]);
+                    string desc = BuildDesc(feat);
+
                     if (count < MAX_WAYPOINTS)
                     {
-                        waypoints[count] = new Waypoint(feat[0], feat[1], feat[3], feat[4], 0, feat[10]);
+                        waypoints[count] = new Waypoint(feat[0], feat[1], feat[3], feat[4], elev, desc);
                         count++;
                     }
                 }
             }
+        }
+
+        private int ConvertElevation(string str)
+        {
+            if (string.IsNullOrWhiteSpace(str)) return 0;
+            char[] units = { 'f', 't', 'M', 'm', ' ' };
+            string numPart = str.TrimEnd(units);
+            if (!double.TryParse(numPart, out double val)) return 0;
+            if (str.ToLower().EndsWith("m")) return (int)val;
+            return (int)(val * 0.3048); // Fixed: Correct factor for ft to m
+        }
+
+        private string BuildDesc(string[] feat)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 10; i < feat.Length; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(feat[i])) sb.Append(feat[i] + (i < feat.Length - 1 ? "," : ""));
+            }
+            return sb.ToString().TrimEnd(',');
         }
 
         public Waypoint FindWaypoint(string searchStr)
@@ -48,6 +72,12 @@ namespace StarterCode_WayPoints
                     return waypoints[i];
             }
             return null;
+        }
+        
+        public void DisplayAll(int limit = 20)
+        {
+            for (int i = 0; i < Math.Min(limit, count); i++)
+                Console.WriteLine($"{i + 1}. {waypoints[i].Name} ({waypoints[i].Code})");
         }
     }
 }
